@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Timer Sequenziale Dinamico e Unificato (F8/F9)</title>
+    <title>Timer Sequenziale Dinamico a Scomparsa (F8/F9)</title>
     <style>
         /* Definizione delle dimensioni dei font come variabili CSS */
         :root {
@@ -24,11 +24,34 @@
             color: #fff;
             overflow: hidden; 
         }
-        
-        /* Contenitore della tabella di configurazione (invariato) */
-        #config-panel {
+
+        /* --- STILE PULSANTE IMPOSTAZIONI (INGRANAGGIO) --- */
+        #settings-button {
             position: absolute;
             top: 20px;
+            left: 20px;
+            z-index: 101; /* Sopra tutto */
+            background: #f5c518;
+            color: #2e2c28;
+            border: none;
+            padding: 10px 12px;
+            font-size: 24px; 
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 6px;
+            line-height: 1;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+            transition: background 0.2s;
+        }
+
+        #settings-button:hover {
+            background: #ffda63;
+        }
+        
+        /* --- STILE DEL PANNELLO DI CONFIGURAZIONE A SCOMPARSA --- */
+        #config-panel {
+            position: absolute;
+            top: 70px; /* Sotto il pulsante impostazioni */
             left: 20px;
             z-index: 100;
             padding: 15px;
@@ -36,12 +59,14 @@
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
             text-align: left;
-            opacity: 0.2; 
-            transition: opacity 0.3s;
+            /* Nascondi il pannello e prepara l'animazione */
+            transform: translateX(-110%); 
+            transition: transform 0.3s ease-in-out;
         }
-
-        #config-panel:hover {
-            opacity: 1.0;
+        
+        /* Classe per rendere il pannello visibile */
+        #config-panel.visible {
+            transform: translateX(0);
         }
 
         #config-panel h3 {
@@ -54,6 +79,7 @@
             border-collapse: collapse;
             font-size: 0.9em;
             width: 100%;
+            margin-bottom: 10px;
         }
 
         #config-table th, #config-table td {
@@ -71,7 +97,7 @@
             text-align: center;
         }
         
-        /* Stili per i pulsanti Aggiungi/Rimuovi (invariati) */
+        /* Stili dei pulsanti Aggiungi/Rimuovi (invariati) */
         .config-buttons button {
             background: #f5c518;
             color: #2e2c28;
@@ -87,6 +113,7 @@
         }
         .config-buttons {
             padding: 5px 0 10px;
+            text-align: center;
         }
         .remove-btn {
             background-color: #c93b3b !important;
@@ -96,7 +123,7 @@
              background-color: #ff5555 !important;
         }
 
-        /* Stile del contenitore unificato (invariato) */
+        /* Stili del resto della pagina (invariati) */
         #header-status { 
             position: absolute;
             top: 30px; 
@@ -116,7 +143,6 @@
             font-size: 0.8em;
         }
         
-        /* Stili del timer (invariati) */
         .timer-container {
             position: relative;
             width: 80vh; 
@@ -163,7 +189,6 @@
         }
 
         .progress-ring__circle {
-            /* Rimuove la transizione CSS per l'animazione della barra per evitare animazioni indesiderate di "ripristino" */
             transition: none; 
             transform: rotate(-90deg); 
             transform-origin: 50% 50%;
@@ -179,6 +204,8 @@
     </style>
 </head>
 <body>
+
+    <button id="settings-button" onclick="toggleConfigPanel()">⚙️</button>
 
     <div id="config-panel">
         <h3>Configurazione Timer</h3>
@@ -239,6 +266,7 @@
         const FONT_SIZE_TIMER = getComputedStyle(document.documentElement).getPropertyValue('--font-size-timer');
         
         // --- RIFERIMENTI DOM GLOBALI ---
+        const configPanel = document.getElementById('config-panel'); // Riferimento al pannello
         const currentStatusElement = document.getElementById('current-status'); 
         const displayElement = document.getElementById('timerDisplay');
         const progressCircle = document.getElementById('progressCircle');
@@ -260,6 +288,11 @@
         };
         let timerIdCounter = 4;
         
+        // --- FUNZIONE PER MOSTRARE/NASCONDERE IL PANNELLO ---
+        function toggleConfigPanel() {
+            configPanel.classList.toggle('visible');
+        }
+
         // --- FUNZIONI DI GESTIONE TABELLA (invariate) ---
         function redrawTable() {
             configTbody.innerHTML = '';
@@ -305,7 +338,7 @@
             }
         }
 
-        // --- FUNZIONI DI GESTIONE TIMER ---
+        // --- FUNZIONI DI GESTIONE TIMER (invariate) ---
         
         let currentSequence = [];
         let currentTimerIndex = 0;
@@ -358,7 +391,6 @@
         
         function startCurrentTimer() {
             if (currentTimerIndex >= currentSequence.length) {
-                // Sequenza Completata
                 currentStatusElement.textContent = `SEQUENZA COMPLETATA! Premi F8 o F9 per ricominciare.`;
                 displayElement.textContent = "PRONTO"; 
                 displayElement.style.fontSize = FONT_SIZE_PRONTO; 
@@ -391,9 +423,7 @@
                     setProgress(0); 
                     
                     currentTimerIndex++;
-                    
-                    // RIMOSSO: setTimeout(startCurrentTimer, 500);
-                    startCurrentTimer(); // Avvia il timer successivo immediatamente
+                    startCurrentTimer();
                     
                     return; 
                 }
