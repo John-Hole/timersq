@@ -261,12 +261,14 @@
     </div>
 
     <script>
-        // --- VARIABILI DI CONFIGURAZIONE DEL FONT ---
-        const FONT_SIZE_PRONTO = getComputedStyle(document.documentElement).getPropertyValue('--font-size-pronto');
-        const FONT_SIZE_TIMER = getComputedStyle(document.documentElement).getPropertyValue('--font-size-timer');
+        // --- VARIABILI DI CONFIGURAZIONE ---
+        const FONT_SIZE_PRONTO = '10vh';
+        const FONT_SIZE_TIMER = '15vh';
+        // Tasti che NON attivano il reset
+        const ALLOWED_KEYS = ['F8', 'F9', 'Escape', 'Shift', 'Control', 'Alt', 'Meta']; 
         
         // --- RIFERIMENTI DOM GLOBALI ---
-        const configPanel = document.getElementById('config-panel'); // Riferimento al pannello
+        const configPanel = document.getElementById('config-panel');
         const currentStatusElement = document.getElementById('current-status'); 
         const displayElement = document.getElementById('timerDisplay');
         const progressCircle = document.getElementById('progressCircle');
@@ -288,12 +290,18 @@
         };
         let timerIdCounter = 4;
         
+        let currentSequence = [];
+        let currentTimerIndex = 0;
+        let countdownInterval;
+        let timeRemaining = 0;
+        let totalDuration = 0; 
+
         // --- FUNZIONE PER MOSTRARE/NASCONDERE IL PANNELLO ---
         function toggleConfigPanel() {
             configPanel.classList.toggle('visible');
         }
 
-        // --- FUNZIONI DI GESTIONE TABELLA (invariate) ---
+        // --- FUNZIONI DI GESTIONE TABELLA ---
         function redrawTable() {
             configTbody.innerHTML = '';
             
@@ -338,14 +346,8 @@
             }
         }
 
-        // --- FUNZIONI DI GESTIONE TIMER (invariate) ---
+        // --- FUNZIONI DI GESTIONE TIMER ---
         
-        let currentSequence = [];
-        let currentTimerIndex = 0;
-        let countdownInterval;
-        let timeRemaining = 0;
-        let totalDuration = 0; 
-
         function setProgress(percent) {
             const offset = CIRCUMFERENCE * (1 - percent); 
             progressCircle.style.strokeDashoffset = offset;
@@ -363,8 +365,11 @@
              if (countdownInterval) {
                 clearInterval(countdownInterval);
             }
+            
+            // Reset logica timer
             currentTimerIndex = 0;
             currentSequence = [];
+            
             currentStatusElement.textContent = "Premi F8 o F9 per avviare un timer.";
             displayElement.textContent = "PRONTO"; 
             displayElement.style.fontSize = FONT_SIZE_PRONTO; 
@@ -459,29 +464,44 @@
             startCurrentTimer();
         }
 
+        /**
+         * Funzione principale di gestione dei tasti.
+         */
         function handleKey(event) {
-            let keyToRun = null;
+            const keyPressed = event.key;
             
-            if (event.key === 'F8') {
+            // 1. CHECK TASTI PRINCIPALI: F8 e F9 AVVIANO
+            if (keyPressed === 'F8') {
                 event.preventDefault(); 
-                keyToRun = 'F8';
-            } else if (event.key === 'F9') {
+                startSequence('F8');
+                return;
+                
+            } else if (keyPressed === 'F9') {
                 event.preventDefault(); 
-                keyToRun = 'F9';
-            } else if (event.key === 'Escape') { 
+                startSequence('F9');
+                return;
+                
+            } else if (keyPressed === 'Escape') { 
                 event.preventDefault();
+                // ESC: Reset/Stop immediato
                 resetTimer();
                 return;
             }
 
-            if (keyToRun) {
-                startSequence(keyToRun);
+            // 2. CHECK TASTI NON AUTORIZZATI PER RESET
+            // Se c'è un timer attivo E il tasto premuto non è nella lista dei tasti consentiti: RESETTA
+            if (currentSequence.length > 0 && !ALLOWED_KEYS.includes(keyPressed)) {
+                 // Resetta anche se si preme un tasto come "a", "1", o "?" durante il timer
+                event.preventDefault(); // Blocca l'input di testo
+                resetTimer();
+                currentStatusElement.textContent = "RESET: Tasto non autorizzato premuto.";
             }
         }
 
         document.addEventListener('keydown', handleKey);
         
         // Inizializzazione
+        configPanel.style.transform = 'translateX(-110%)'; 
         redrawTable();
         resetTimer(); 
     </script>
