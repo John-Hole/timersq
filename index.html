@@ -4,38 +4,34 @@
     <meta charset="UTF-8">
     <title>Timer Sequenziale Dinamico a Scomparsa (F8/F9)</title>
     <style>
-        /* Definizione delle dimensioni dei font come variabili CSS */
         :root {
-            --font-size-pronto: 10vh; 
+            --font-size-pronto: 10vh;
             --font-size-timer: 15vh;
         }
-
-        body { 
-            font-family: Arial, sans-serif; 
-            text-align: center; 
-            margin: 0; 
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
             height: 100vh;
             width: 100vw;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background-color: #2e2c28; 
+            background-color: #2e2c28;
             color: #fff;
-            overflow: hidden; 
+            overflow: hidden;
         }
-
-        /* --- STILE PULSANTE IMPOSTAZIONI (INGRANAGGIO) --- */
         #settings-button {
             position: absolute;
             top: 20px;
             left: 20px;
-            z-index: 101; /* Sopra tutto */
+            z-index: 101;
             background: #f5c518;
             color: #2e2c28;
             border: none;
             padding: 10px 12px;
-            font-size: 24px; 
+            font-size: 24px;
             font-weight: bold;
             cursor: pointer;
             border-radius: 6px;
@@ -43,15 +39,12 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
             transition: background 0.2s;
         }
-
         #settings-button:hover {
             background: #ffda63;
         }
-        
-        /* --- STILE DEL PANNELLO DI CONFIGURAZIONE A SCOMPARSA --- */
         #config-panel {
             position: absolute;
-            top: 70px; /* Sotto il pulsante impostazioni */
+            top: 70px;
             left: 20px;
             z-index: 100;
             padding: 15px;
@@ -59,113 +52,119 @@
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
             text-align: left;
-            /* Nascondi il pannello e prepara l'animazione */
-            transform: translateX(-110%); 
-            transition: transform 0.3s ease-in-out;
+            transform: translateX(-110%);
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            opacity: 0;
+            pointer-events: none;
         }
-        
-        /* Classe per rendere il pannello visibile */
         #config-panel.visible {
             transform: translateX(0);
+            opacity: 1;
+            pointer-events: auto;
         }
-
         #config-panel h3 {
             margin-top: 0;
             font-size: 1.2em;
             color: #f5c518;
+            margin-bottom: 15px; /* Aggiunto spazio sotto il titolo */
         }
-
         #config-table {
             border-collapse: collapse;
             font-size: 0.9em;
             width: 100%;
-            margin-bottom: 10px;
+            margin-bottom: 15px; /* Aumentato spazio sotto la tabella */
+            border-radius: 5px; /* Bordi arrotondati per la tabella */
+            overflow: hidden; /* Assicura che i bordi arrotondati siano visibili */
         }
-
         #config-table th, #config-table td {
-            padding: 5px 10px;
-            border: 1px solid #4d4b46;
+            padding: 8px 12px; /* Aumentato il padding */
+            border: 1px solid rgba(77, 75, 70, 0.5); /* Bordo più morbido */
             vertical-align: middle;
+            text-align: center; /* Centra il testo in tutte le celle */
         }
-
+        #config-table th {
+            background-color: #4d4b46; /* Sfondo per l'intestazione */
+            color: #f5c518; /* Colore testo intestazione */
+            font-weight: bold;
+        }
         #config-table input[type="number"] {
-            width: 50px;
+            width: 70px; /* Larghezza fissa per l'input */
             background: #2e2c28;
-            border: 1px solid #4d4b46;
+            border: 1px solid #666; /* Bordo più visibile per l'input */
             color: #fff;
-            padding: 3px;
+            padding: 5px; /* Aumentato padding input */
             text-align: center;
+            border-radius: 4px; /* Bordi arrotondati per l'input */
+            -moz-appearance: textfield; /* Rimuove le frecce in Firefox */
+            appearance: textfield; /* Standard property for compatibility */
         }
-        
-        /* Stili dei pulsanti Aggiungi/Rimuovi (invariati) */
+        #config-table input[type="number"]::-webkit-outer-spin-button,
+        #config-table input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none; /* Rimuove le frecce in Chrome/Safari */
+            margin: 0;
+        }
         .config-buttons button {
             background: #f5c518;
             color: #2e2c28;
             border: none;
-            padding: 5px 10px;
-            margin-left: 5px;
+            padding: 8px 15px; /* Aumentato padding pulsanti */
+            margin-left: 8px; /* Aumentato margine tra i pulsanti */
             font-weight: bold;
             cursor: pointer;
-            border-radius: 3px;
+            border-radius: 4px; /* Bordi arrotondati per i pulsanti */
+            transition: background 0.2s;
         }
         .config-buttons button:hover {
             background: #ffda63;
         }
         .config-buttons {
-            padding: 5px 0 10px;
+            padding: 10px 0 0; /* Aumentato padding superiore */
             text-align: center;
         }
         .remove-btn {
             background-color: #c93b3b !important;
             color: white !important;
+            padding: 6px 12px !important; /* Padding specifico per il pulsante rimuovi */
+            font-size: 0.9em; /* Dimensione font leggermente più piccola */
         }
         .remove-btn:hover {
              background-color: #ff5555 !important;
         }
-
-        /* Stili del resto della pagina (invariati) */
-        #header-status { 
+        #header-status {
             position: absolute;
-            top: 30px; 
-            right: 30px; 
-            z-index: 50; 
-            font-size: 3vh; 
-            text-align: right; 
-            line-height: 1.5; 
+            top: 30px;
+            right: 30px;
+            z-index: 50;
+            font-size: 3vh;
+            text-align: right;
+            line-height: 1.5;
         }
         #current-status {
-            color: #ccc; 
-            font-size: 1em; 
+            color: #ccc;
+            font-size: 1em;
             min-height: 3vh;
         }
-        #hotkey-info {
-            color: #888; 
-            font-size: 0.8em;
-        }
-        
         .timer-container {
             position: relative;
-            width: 80vh; 
+            width: 80vh;
             height: 80vh;
-            max-width: 900px; 
+            max-width: 900px;
             max-height: 900px;
             margin: auto;
         }
-
-        #timerDisplay { 
+        #timerDisplay {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-weight: 900; 
-            color: #fff; 
+            font-weight: 900;
+            color: #fff;
             line-height: 1;
             z-index: 10;
-            background-color: transparent; 
-            white-space: nowrap; 
-            font-size: var(--font-size-pronto); 
+            background-color: transparent;
+            white-space: nowrap;
+            font-size: var(--font-size-pronto);
         }
-        
         #stopButton {
             position: absolute;
             top: calc(50% + 15vh);
@@ -183,30 +182,33 @@
             opacity: 0;
             transition: opacity 0.3s;
         }
-
         #stopButton:hover {
             background-color: #ffda63;
         }
-
         .progress-ring__circle {
-            transition: none; 
-            transform: rotate(-90deg); 
+            transition: none;
+            transform: rotate(-90deg);
             transform-origin: 50% 50%;
         }
-
         .progress-ring__bg {
-            stroke: #4d4b46; 
+            stroke: #4d4b46;
         }
-
         .progress-ring__fg {
-            stroke: #f5c518; 
+            stroke: #f5c518;
+        }
+        #live-clock {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 10vh;
+            font-weight: bold;
+            color: #ccc;
+            z-index: 50;
         }
     </style>
 </head>
 <body>
-
     <button id="settings-button" onclick="toggleConfigPanel()">⚙️</button>
-
     <div id="config-panel">
         <h3>Configurazione Timer</h3>
         <table id="config-table">
@@ -218,67 +220,56 @@
                     <th>Azione</th>
                 </tr>
             </thead>
-            <tbody id="config-tbody">
-                </tbody>
+            <tbody id="config-tbody"></tbody>
         </table>
-        
         <div class="config-buttons">
             Aggiungi:
             <button onclick="addTimerRow('F8', 40)">+ F8</button>
             <button onclick="addTimerRow('F9', 60)">+ F9</button>
         </div>
     </div>
-    
     <div id="header-status">
         <div id="current-status"></div>
-        <div id="hotkey-info">F8: (Sequenza 1) | F9: (Sequenza 2) | Premi ESC/STOP per fermare</div>
     </div>
-
     <div class="timer-container">
         <svg class="progress-ring" width="100%" height="100%" viewBox="0 0 300 300">
-            <circle 
+            <circle
                 class="progress-ring__circle progress-ring__bg"
-                stroke-width="25" 
+                stroke-width="25"
                 fill="transparent"
-                r="137.5" 
+                r="137.5"
                 cx="150"
                 cy="150"
             />
-            <circle 
+            <circle
                 class="progress-ring__circle progress-ring__fg"
                 id="progressCircle"
-                stroke-width="25" 
+                stroke-width="25"
                 fill="transparent"
                 r="137.5"
                 cx="150"
                 cy="150"
             />
         </svg>
-
         <div id="timerDisplay">PRONTO</div>
-
-        <button id="stopButton" onclick="resetTimer()">STOP</button> 
+        <button id="stopButton" onclick="resetTimer()">STOP</button>
     </div>
 
+    <div id="live-clock"></div>
+
     <script>
-        // --- VARIABILI DI CONFIGURAZIONE ---
-        const FONT_SIZE_PRONTO = '10vh';
-        const FONT_SIZE_TIMER = '15vh';
-        // Tasti che NON attivano il reset
-        const ALLOWED_KEYS = ['F8', 'F9', 'Escape', 'Shift', 'Control', 'Alt', 'Meta']; 
-        
-        // --- RIFERIMENTI DOM GLOBALI ---
+        const FONT_SIZE_PRONTO = getComputedStyle(document.documentElement).getPropertyValue('--font-size-pronto');
+        const FONT_SIZE_TIMER = getComputedStyle(document.documentElement).getPropertyValue('--font-size-timer');
         const configPanel = document.getElementById('config-panel');
-        const currentStatusElement = document.getElementById('current-status'); 
+        const currentStatusElement = document.getElementById('current-status');
         const displayElement = document.getElementById('timerDisplay');
         const progressCircle = document.getElementById('progressCircle');
         const stopButton = document.getElementById('stopButton');
         const configTbody = document.getElementById('config-tbody');
-
-        const SVG_RADIUS = 137.5; 
-        const CIRCUMFERENCE = 2 * Math.PI * SVG_RADIUS; 
+        const liveClockElement = document.getElementById('live-clock'); // Nuovo riferimento per l'orologio
+        const SVG_RADIUS = 137.5;
+        const CIRCUMFERENCE = 2 * Math.PI * SVG_RADIUS;
         progressCircle.style.strokeDasharray = `${CIRCUMFERENCE} ${CIRCUMFERENCE}`;
-
         let timers = {
             'F8': [
                 { id: 1, duration: 40 },
@@ -289,45 +280,29 @@
             ]
         };
         let timerIdCounter = 4;
-        
-        let currentSequence = [];
-        let currentTimerIndex = 0;
-        let countdownInterval;
-        let timeRemaining = 0;
-        let totalDuration = 0; 
-
-        // --- FUNZIONE PER MOSTRARE/NASCONDERE IL PANNELLO ---
         function toggleConfigPanel() {
             configPanel.classList.toggle('visible');
         }
-
-        // --- FUNZIONI DI GESTIONE TABELLA ---
         function redrawTable() {
             configTbody.innerHTML = '';
-            
             ['F8', 'F9'].forEach(key => {
                 timers[key].forEach((timer, index) => {
                     const row = configTbody.insertRow();
                     row.id = `row-${key}-${timer.id}`;
-
-                    const keyCell = row.insertCell();
                     if (index === 0) {
+                        const keyCell = row.insertCell();
                         keyCell.innerHTML = `<strong>${key}</strong>`;
                         keyCell.rowSpan = timers[key].length;
-                        keyCell.style.verticalAlign = 'top';
+                        keyCell.style.verticalAlign = 'middle';
                     }
-
                     row.insertCell().textContent = index + 1;
-
                     const durationCell = row.insertCell();
                     durationCell.innerHTML = `<input type="number" value="${timer.duration}" min="1" data-key="${key}" data-id="${timer.id}" class="timer-duration">`;
-
                     const actionCell = row.insertCell();
                     actionCell.innerHTML = `<button class="remove-btn" onclick="removeTimerRow('${key}', ${timer.id})">Rimuovi</button>`;
                 });
             });
         }
-        
         function addTimerRow(key, defaultDuration) {
             const newTimer = {
                 id: timerIdCounter++,
@@ -336,7 +311,6 @@
             timers[key].push(newTimer);
             redrawTable();
         }
-
         function removeTimerRow(key, id) {
             if (timers[key].length > 1) {
                 timers[key] = timers[key].filter(t => t.id !== id);
@@ -345,14 +319,15 @@
                 alert(`La sequenza ${key} deve contenere almeno un timer.`);
             }
         }
-
-        // --- FUNZIONI DI GESTIONE TIMER ---
-        
+        let currentSequence = [];
+        let currentTimerIndex = 0;
+        let countdownInterval;
+        let timeRemaining = 0;
+        let totalDuration = 0;
         function setProgress(percent) {
-            const offset = CIRCUMFERENCE * (1 - percent); 
+            const offset = CIRCUMFERENCE * (1 - percent);
             progressCircle.style.strokeDashoffset = offset;
         }
-
         function formatTime(ms) {
             if (ms < 0) ms = 0;
             const totalSeconds = Math.floor(ms / 1000);
@@ -360,151 +335,122 @@
             const minutes = Math.floor(totalSeconds / 60);
             return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
-        
+        function updateClock() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            liveClockElement.textContent = `${hours}:${minutes}:${seconds}`;
+        }
         function resetTimer() {
              if (countdownInterval) {
                 clearInterval(countdownInterval);
             }
-            
-            // Reset logica timer
             currentTimerIndex = 0;
             currentSequence = [];
-            
-            currentStatusElement.textContent = "Premi F8 o F9 per avviare un timer.";
-            displayElement.textContent = "PRONTO"; 
-            displayElement.style.fontSize = FONT_SIZE_PRONTO; 
+            currentStatusElement.textContent = "";
+            displayElement.textContent = "PRONTO";
+            displayElement.style.fontSize = FONT_SIZE_PRONTO;
             setProgress(1);
             stopButton.style.opacity = 0;
         }
-
         function loadConfiguration(key) {
             const sequence = [];
             const durationInputs = document.querySelectorAll(`.timer-duration[data-key="${key}"]`);
-
+            let allInputsValid = true;
             durationInputs.forEach((input, index) => {
                 const durationSeconds = parseInt(input.value);
-                
-                if (durationSeconds > 0) {
+                if (isNaN(durationSeconds) || durationSeconds <= 0) {
+                    allInputsValid = false;
+                    input.style.border = '2px solid red';
+                    input.title = 'Inserisci un numero intero positivo';
+                } else {
                     sequence.push({
-                        duration: durationSeconds * 1000, 
+                        duration: durationSeconds * 1000,
                         name: `Timer ${index + 1}`
                     });
+                    input.style.border = '';
+                    input.title = '';
                 }
             });
-            return sequence;
+            return { sequence, allInputsValid };
         }
-        
         function startCurrentTimer() {
             if (currentTimerIndex >= currentSequence.length) {
                 currentStatusElement.textContent = `SEQUENZA COMPLETATA! Premi F8 o F9 per ricominciare.`;
-                displayElement.textContent = "PRONTO"; 
-                displayElement.style.fontSize = FONT_SIZE_PRONTO; 
-                setProgress(1); 
-                currentTimerIndex = 0; 
+                displayElement.textContent = "PRONTO";
+                displayElement.style.fontSize = FONT_SIZE_PRONTO;
+                setProgress(1);
+                currentTimerIndex = 0;
                 stopButton.style.opacity = 0;
                 return;
             }
-
             const currentTimer = currentSequence[currentTimerIndex];
             totalDuration = currentTimer.duration;
             timeRemaining = totalDuration;
-            
-            currentStatusElement.textContent = `Timer ${currentTimerIndex + 1} di ${currentSequence.length} in corso`; 
-            
+            currentStatusElement.textContent = `Timer ${currentTimerIndex + 1} di ${currentSequence.length} in corso`;
             if (countdownInterval) {
                 clearInterval(countdownInterval);
             }
-
-            displayElement.style.fontSize = FONT_SIZE_TIMER; 
+            displayElement.style.fontSize = FONT_SIZE_TIMER;
             stopButton.style.opacity = 1;
-
             countdownInterval = setInterval(() => {
-                timeRemaining -= 50; 
-                
+                timeRemaining -= 50;
                 if (timeRemaining <= 0) {
                     clearInterval(countdownInterval);
-                    
-                    displayElement.textContent = "00:00"; 
-                    setProgress(0); 
-                    
+                    displayElement.textContent = "00:00";
+                    setProgress(0);
                     currentTimerIndex++;
                     startCurrentTimer();
-                    
-                    return; 
+                    return;
                 }
-
                 if (timeRemaining % 1000 < 50) {
                     displayElement.textContent = formatTime(timeRemaining);
                 }
-                
                 const percentage = timeRemaining / totalDuration;
                 setProgress(percentage);
-
-            }, 50); 
+            }, 50);
         }
-
         function startSequence(key) {
-            const sequence = loadConfiguration(key);
-
+            const { sequence, allInputsValid } = loadConfiguration(key);
+            if (!allInputsValid) {
+                currentStatusElement.textContent = `Errore: Alcuni valori di durata per la sequenza ${key} non sono validi. Controlla le impostazioni.`;
+                return;
+            }
             if (sequence.length === 0) {
                 currentStatusElement.textContent = `Errore: Nessun timer configurato per ${key}. Aggiungine uno.`;
                 return;
             }
-            
             if (countdownInterval) {
                 clearInterval(countdownInterval);
             }
-            
             currentSequence = sequence;
-            currentTimerIndex = 0; 
-            
-            displayElement.style.fontSize = FONT_SIZE_TIMER; 
+            currentTimerIndex = 0;
+            displayElement.style.fontSize = FONT_SIZE_TIMER;
             displayElement.textContent = formatTime(currentSequence[0].duration);
-            stopButton.style.opacity = 1; 
+            stopButton.style.opacity = 1;
             startCurrentTimer();
         }
-
-        /**
-         * Funzione principale di gestione dei tasti.
-         */
         function handleKey(event) {
-            const keyPressed = event.key;
-            
-            // 1. CHECK TASTI PRINCIPALI: F8 e F9 AVVIANO
-            if (keyPressed === 'F8') {
-                event.preventDefault(); 
-                startSequence('F8');
-                return;
-                
-            } else if (keyPressed === 'F9') {
-                event.preventDefault(); 
-                startSequence('F9');
-                return;
-                
-            } else if (keyPressed === 'Escape') { 
+            let keyToRun = null;
+            if (event.key === 'F8') {
                 event.preventDefault();
-                // ESC: Reset/Stop immediato
-                resetTimer();
-                return;
+                keyToRun = 'F8';
+            } else if (event.key === 'F9') {
+                event.preventDefault();
+                keyToRun = 'F9';
             }
-
-            // 2. CHECK TASTI NON AUTORIZZATI PER RESET
-            // Se c'è un timer attivo E il tasto premuto non è nella lista dei tasti consentiti: RESETTA
-            if (currentSequence.length > 0 && !ALLOWED_KEYS.includes(keyPressed)) {
-                 // Resetta anche se si preme un tasto come "a", "1", o "?" durante il timer
-                event.preventDefault(); // Blocca l'input di testo
+            if (keyToRun) {
+                startSequence(keyToRun);
+            } else {
                 resetTimer();
-                currentStatusElement.textContent = "RESET: Tasto non autorizzato premuto.";
             }
         }
-
         document.addEventListener('keydown', handleKey);
-        
-        // Inizializzazione
-        configPanel.style.transform = 'translateX(-110%)'; 
         redrawTable();
-        resetTimer(); 
+        resetTimer();
+        updateClock(); // Aggiorna l'orologio immediatamente all'avvio
+        setInterval(updateClock, 1000); // Aggiorna l'orologio ogni secondo
     </script>
-
 </body>
 </html>
